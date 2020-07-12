@@ -2,29 +2,30 @@ module channels
 
 import sync
 
-interface ClaimSender{ //<T> {
+interface ClaimSender{
 	claim() bool
-	send(Receiver) //<T>)
+	send(Receiver)
 	cancel()
 }
 
-interface Sender{ //<T> {
-	send(Receiver) //<T>)
+interface Sender{
+	send(Receiver)
 }
+
 /*
-interface ClaimReceiver<T> {
+interface ClaimReceiver {
 	claim() bool
-	receive(T)
+	receive(x GenericValue)
 	cancel()
 }
 
-interface Receiver<T> {
-	receive(T)
-}*/
+interface Receiver {
+	receive(GenericValue)
+}
+*/
 
-
-struct BlockingSender<T> {
-    value T
+struct BlockingSender {
+    value GenericValue
     mut:
         m &sync.Mutex 
 }
@@ -41,13 +42,13 @@ fn (s BlockingSender) claim() bool {
 fn (s BlockingSender) cancel() {}
 
 // BlockingReceiver currently unused
-struct BlockingReceiver<T> {
+struct BlockingReceiver {
     mut:
-        v ?T
+        v GenericValue
         m &sync.Mutex 
 }
 
-fn (mut s BlockingReceiver) receive(value ?T) {
+fn (mut s BlockingReceiver) receive(value GenericValue) {
     defer { s.m.unlock() }
     s.v = value
 }

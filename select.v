@@ -14,7 +14,6 @@ pub fn make_select() &Select {
     return &Select{m:sync.new_mutex(),b:sync.new_mutex()}
 }
 
-
 struct Select {
     mut:
         m &sync.Mutex
@@ -24,13 +23,13 @@ struct Select {
 }
 
 // push is syntactic sugar: case chan <- value: do...
-pub fn (s Select) push<T>(chan Channel<T>, value T, do fn()) {
-	chan.register_sender(SelectSender<T>{value,do,&s})
+pub fn (s Select) push(chan Channel, value GenericValue, do fn()) {
+	chan.register_sender(SelectSender{value,do,&s})
 }
 
 // pull is syntactic sugar: case x := <- chan: do(x)
-pub fn (s Select) pull<T>(chan Channel<T>, do fn(T)) {
-	sr := Receiver<T>{do:do,sel:&s} // var created due to compiler bug? // SelectReceiver
+pub fn (s Select) pull(chan Channel, do fn(GenericValue)) {
+	sr := Receiver{do:do,sel:&s} // var created due to compiler bug? // SelectReceiver
 	if chan.register_receiver(sr) {
 		s.count++
 	}
@@ -81,8 +80,8 @@ fn (mut s Select) cancel() { // When receiver bails
 	s.m.m_unlock()
 }
 
-struct SelectSender<T> {
-	value T
+struct SelectSender {
+	value GenericValue
 	do fn()
 	mut:
 		sel Select
@@ -96,19 +95,15 @@ fn (mut s SelectSender) send(r Receiver) {
 	s.do()
 }
 
-struct SelectReceiver<T> {
-	do fn(T)
+struct SelectReceiver {
+	do fn(GenericValue)
 	mut: 
 		sel Select
 }
 
-fn (s SelectReceiver) receive(value ?T) ?T{
+fn (s SelectReceiver) receive(value GenericValue) GenericValue {
 	s.finished = true
 	s.sel.m_unlock()
 	if s.sel.b != none { s.sel.b.m_unlock() }
 	s.do(value)
 }
-
-
-
-

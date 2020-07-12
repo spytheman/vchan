@@ -4,17 +4,19 @@ import sync
 
 // Receiver is the sum of BlockReceiver and SelectReceiver
 // 	created to get around lack of generic interfaces
-struct Receiver<T> {
-	do fn(T)
+struct Receiver {
+	do fn(GenericValue)
     mut:
-        v ?T
+        v GenericValue
         m &sync.Mutex
 		sel Select
 }
 
-fn (mut s Receiver) receive(value ?T) {
-	if m != none {
-    	defer { s.m.unlock() }
+fn (mut s Receiver) receive(value GenericValue) {
+	if m != 0 {
+    	defer {
+        	s.m.unlock() 
+        }
     	s.v = value
 	} else {
 		s.finished = true
@@ -25,14 +27,14 @@ fn (mut s Receiver) receive(value ?T) {
 }
 
 fn (s Receiver) claim() bool {
-	if s.m != none {
+	if s.m != 0 {
     	return true
 	}
 	return s.sel.claim()
 }
 
 fn (s Receiver) cancel() {
-	if s.m == none {
+	if s.m == 0 {
 		s.sel.cancel()
 	}
 }

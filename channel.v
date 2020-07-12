@@ -2,6 +2,8 @@ module channels
 
 import sync
 
+type GenericValue voidptr
+
 /*
 Channels needs the following sugar:
 c <- x       :  c.push(x)  
@@ -10,32 +12,32 @@ for i in c { :  for i := c.pull() ; i != none ; i = c.pull() {
 */
 
 // make_chan provides Go like channels. size -1 for uncapped channels
-pub fn make_chan<T>(size int) &Channel<T> {
+pub fn make_chan(size int) &Channel {
     return &Channel{size: size, ctrl:sync.new_mutex()}
 }
 
-struct Channel<T> {
+struct Channel {
     size int
     mut:
         ctrl &sync.Mutex
         receivers []Receiver
         senders []Sender
-        buffer []T
+        buffer []GenericValue
         closed bool
 }
 
 // push places a value to the end of Channel, blocking until a free slot is available.
 // Syntactic sugar for: c <- value
-pub fn (mut c Channel<T>) push(value T) {
+pub fn (mut c Channel) push(value GenericValue) {
     m := sync.new_waiter()
     m.wait()
-    c.register_sender(blockingSender{value,&m})
+    c.register_sender(BlockingSender{value,&m})
     m.wait()
 }
 
 // pull takes a value from the front of the Channel, blocking until a value is available
 // Syntactic sugar for: <- c
-pub fn (mut c Channel) pull<T>() ?T {
+pub fn (mut c Channel) pull() GenericValue {
     m := sync.new_waiter()
     m.wait()
     receiver := Receiver{m:m} // BlockingReceiver
@@ -69,7 +71,7 @@ pub fn (c Channel) cap() int {
     return c.size
 }
 
-fn (mut c Channel<T>) register_sender(s ClaimSender) {
+fn (mut c Channel) register_sender(s ClaimSender) {
     c.ctrl.m_lock()
     defer { c.ctrl.m_unlock() }
 
@@ -98,11 +100,11 @@ fn (mut c Channel<T>) register_sender(s ClaimSender) {
     senders.add(s)
 }
 
-fn (mut c Channel<T>) receive(value T) {
+fn (mut c Channel) receive(value GenericValue) {
     c.buffer.add(value)
 }
 
-fn (mut c Channel<T>) register_receiver(r Receiver) bool {
+fn (mut c Channel) register_receiver(r Receiver) bool {
     c.ctrl.m_lock()
     defer { c.ctrl.m_unlock() }
 
