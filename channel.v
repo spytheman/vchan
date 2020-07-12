@@ -1,5 +1,7 @@
 module channels
 
+import sync
+
 /*
 Channels needs the following sugar:
 c <- x       :  c.push(x)  
@@ -7,13 +9,10 @@ x := <- c    :  x := c.pull()
 for i in c { :  for i := c.pull() ; i != none ; i = c.pull() {
 */
 
-import sync
-
-// makeChan provides Go like channels. size -1 for uncapped channels
+// make_chan provides Go like channels. size -1 for uncapped channels
 pub fn make_chan<T>(size int) &Channel<T> {
     return &Channel{size: size, ctrl:sync.new_mutex()}
 }
-
 
 struct Channel<T> {
     size int
@@ -132,8 +131,3 @@ fn (mut c Channel<T>) register_receiver(r Receiver) bool {
     receivers.add(r)
     return true
 }
-
-
-
-
-

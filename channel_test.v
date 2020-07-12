@@ -1,5 +1,8 @@
 module channels
 
+fn test_ok() {
+	assert true
+}
 fn test_chan() {
     stress_chan(0,10,10,10000)
     stress_chan(10,10,10,10000)
@@ -7,7 +10,7 @@ fn test_chan() {
 
 fn stress_chan(size int, senders int, receivers int, testsPerSender int) {
 
-    c := make_chan(size)
+    c := make_chan<int>(size)
 
     go fn(c) {
         mut wg := &WaitGroup{}
@@ -24,7 +27,7 @@ fn stress_chan(size int, senders int, receivers int, testsPerSender int) {
         c.close()
     }(c)
 
-    c2 := makeChan(size)
+    c2 := make_chan<int>(size)
     for i := 0 ; i < receivers ; i++ {
         go fn() {
             for {
